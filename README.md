@@ -4,6 +4,15 @@ Juego para la asignatura practicas de desarrollo de software
 Para que el ejecutable funcione, debe estar al mismo nivel que la carpeta images
 de esa forma podra obtener los recursos graficos que son indispensables
 
+¿COMO FUNCIONA?
+
+El juego simula el comportamiento de la IA para la clasificacion de naranjas buenas y podridas.
+Consta de 6 jugadores los cuales jugaran rondas entera por turnos, el programa les preguntara
+si quieren realizar otra ronda cada que finalicen, o si quieren obtener los resultados en un archivo 
+.txt
+
+en cada ronda es obligatorio que los 6 jugadores esten presentes.
+
 Las imagenes de las naranjas fueron tomadas del repositorio de kaggle:
 https://www.kaggle.com/datasets/sriramr/fruits-fresh-and-rotten-for-classification
 

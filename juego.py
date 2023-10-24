@@ -19,15 +19,22 @@ BUTTON_COLOR = (0, 255, 0)
 BUTTON_TEXT_COLOR = (0, 0, 0)
 
 # Resultado
-TP=0
-TN=0
-FP=0
-FN=0
+TP=[0,0,0,0,0,0]
+TN=[0,0,0,0,0,0]
+FP=[0,0,0,0,0,0]
+FN=[0,0,0,0,0,0]
 
-accuracy = 0
-precision = 0
-recall = 0
-f1Score = 0
+accuracy = [0,0,0,0,0,0]
+precision = [0,0,0,0,0,0]
+recall = [0,0,0,0,0,0]
+f1Score = [0,0,0,0,0,0]
+
+# Lista de jugadores genéricos
+players = ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4", "Jugador 5", "Jugador 6"]
+current_player_index = 0
+
+# Contador para rastrear cuántos jugadores han jugado
+players_played = 0
 
 # Crear la pantalla
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -185,8 +192,15 @@ def show_reset():
     font = pygame.font.Font(None, 36)
     button_reiniciar_rect = pygame.Rect(10, 10, 200, 50)
     pygame.draw.rect(screen, BUTTON_COLOR, button_reiniciar_rect)
-    button_reiniciar_text = font.render("Reiniciar", True, BUTTON_TEXT_COLOR)
+    button_reiniciar_text = font.render("¿Otra ronda?", True, BUTTON_TEXT_COLOR)
     screen.blit(button_reiniciar_text, (button_reiniciar_rect.centerx - button_reiniciar_text.get_width() / 2, button_reiniciar_rect.centery - button_reiniciar_text.get_height() / 2))
+
+def show_next():
+    font = pygame.font.Font(None, 36)
+    button_next_rect = pygame.Rect(10, 200, 200, 50)
+    pygame.draw.rect(screen, BUTTON_COLOR, button_next_rect)
+    button_next_text = font.render("Siguiente jugador", True, BUTTON_TEXT_COLOR)
+    screen.blit(button_next_text, (button_next_rect.centerx - button_next_text.get_width() / 2, button_next_rect.centery - button_next_text.get_height() / 2))
 
 # Dibuja un botón de reinicio
 
@@ -197,32 +211,49 @@ def reiniciar_juego():
 
 # Bucle principal del juego
 def initialize():
-    global showGrid, running, lastButtons, show_thanks
+    global showGrid, running, lastButtons, show_thanks,nextTurn
     showGrid = True
     running = True
+    nextTurn = False
     lastButtons = False
     show_thanks = False
 
 def rotten_oranges():
-    global background, lastButtons
+    global background, lastButtons, nextTurn, players_played
     background = pygame.image.load(image_location_rotten)
-    lastButtons = True
+    players_played += 1
+    if players_played >=6:
+        lastButtons = True
+    else :
+        nextTurn = True
+
 
 def fresh_oranges():
-    global background, lastButtons
+    global background, lastButtons, nextTurn, players_played
     background = pygame.image.load(image_location_fresh)
-    lastButtons = True
+    players_played += 1
+    if players_played >=6:
+        lastButtons = True
+    else :
+        nextTurn = True
 
 def export_variables_to_txt():
     with open("resultado.txt", "w") as file:
-        file.write(f"frescaCorrecta={TP}\n")
-        file.write(f"frescaIncorrecta={TN}\n")
-        file.write(f"podridaCorrecta={FP}\n")
-        file.write(f"podridaIncorrecta={FN}\n")
-        file.write(f"Accuracy={accuracy}\n")
-        file.write(f"Precision={precision}\n")
-        file.write(f"Recall={recall}\n")
-        file.write(f"f1-score={f1Score}\n")
+        for j in range(0,6,1):
+            resultPlayer(file,j)
+        
+def resultPlayer(file, j):
+    file.write("                 \n")
+    file.write("******************\n")
+    file.write(f"{players[j]}\n")
+    file.write(f"frescaCorrecta={TP[j]}\n")
+    file.write(f"frescaIncorrecta={TN[j]}\n")
+    file.write(f"podridaCorrecta={FP[j]}\n")
+    file.write(f"podridaIncorrecta={FN[j]}\n")
+    file.write(f"Accuracy={accuracy[j]}\n")
+    file.write(f"Precision={precision[j]}\n")
+    file.write(f"Recall={recall[j]}\n")
+    file.write(f"f1-score={f1Score[j]}\n")
 
 def show_export_button():
     font = pygame.font.Font(None, 36)
@@ -233,11 +264,43 @@ def show_export_button():
     
     return button_export_rect
 
+def calcularAccuracy(tp, tn, fp, fn, posicion):
+    denominator = tp[posicion] + tn[posicion] + fp[posicion] + fn[posicion]
+    if denominator == 0:
+        return 0.0  # Otra acción apropiada si el denominador es cero
+    return (tp[posicion] + tn[posicion]) / denominator
+
+def calcularPrecision(tp, fp, posicion):
+    denominator = tp[posicion] + fp[posicion]
+    if denominator == 0:
+        return 0.0  # Otra acción apropiada si el denominador es cero
+    return tp[posicion] / denominator
+
+def calcularRecall(tp, fn, posicion):
+    denominator = tp[posicion] + fn[posicion]
+    if denominator == 0:
+        return 0.0  # Otra acción apropiada si el denominador es cero
+    return tp[posicion] / denominator
+
+def calcularF1(recallpar, precisionpar, posicion): 
+    if precisionpar[posicion] == 0 or recallpar[posicion] == 0:
+        return 0.0  # Otra acción apropiada si alguna de las medidas es cero
+    return 2 * (recallpar[posicion] * precisionpar[posicion]) / (recallpar[posicion] + precisionpar[posicion])
+
 initialize()
 button1_rect = pygame.Rect(100, 500, 200, 50)  # Define button1_rect
 button2_rect = pygame.Rect(500, 500, 200, 50)  # Define button2_rect
 button_reiniciar_rect = pygame.Rect(10, 10, 200, 50)  # Define button_reiniciar_rect
+button_next_rect = pygame.Rect(10, 200, 200, 50)  # Define button_next_rect
 button_export_rect = pygame.Rect(220, 10, 200, 50)
+
+def show_current_player_label():
+    if players_played<6:
+        font = pygame.font.Font(None, 36)
+        current_player_name = players[players_played]
+        label_text = font.render(f"Jugador en curso: {current_player_name}", True, BUTTON_TEXT_COLOR)
+        label_rect = label_text.get_rect(center=(WIDTH // 2, 50))
+        screen.blit(label_text, label_rect)
 
 while running:
     for event in pygame.event.get():
@@ -259,9 +322,12 @@ while running:
     if background is not None:
         screen.blit(background, (0, 0))
 
-# Dibujar la cuadrícula de cuadros
+    # Dibujar la cuadrícula de cuadros
     if showGrid :
         draw_grid()
+
+    # Mostrar el nombre del jugador en curso
+    show_current_player_label()
 
     if showing_buttons:
         # Mostrar los botones solo cuando se haya alcanzado el porcentaje requerido de cuadros destapados
@@ -271,20 +337,20 @@ while running:
                 x, y = pygame.mouse.get_pos()
                 if button1_rect.collidepoint(x, y):
                     if fresh:
+                        TP[players_played] += 1
                         fresh_oranges()
-                        TP += 1
                     else:
+                        TN[players_played] += 1
                         rotten_oranges()
-                        TN += 1
                     background = pygame.transform.scale(background, (WIDTH, HEIGHT))
                     showing_buttons = False
                 elif button2_rect.collidepoint(x, y):
                     if fresh:
+                        FN[players_played] += 1
                         rotten_oranges()
-                        FN += 1
                     else:
+                        FP[players_played] += 1
                         fresh_oranges()
-                        FP += 1
                     background = pygame.transform.scale(background, (WIDTH, HEIGHT))
                     showing_buttons = False
         if selected_count == total_squares:
@@ -301,22 +367,30 @@ while running:
             pygame.quit()
             sys.exit()
 
-    if lastButtons:
+    if nextTurn and players_played <6:
+        show_next()
+        if pygame.mouse.get_pressed()[0]:
+            x, y = pygame.mouse.get_pos()
+            if button_next_rect.collidepoint(x, y):
+                reiniciar_juego()
+
+    if lastButtons and players_played >=5:
         show_reset()
         show_export_button()
         if pygame.mouse.get_pressed()[0]:
             x, y = pygame.mouse.get_pos()
             if button_reiniciar_rect.collidepoint(x, y):
                 reiniciar_juego()
+                players_played=0
             elif button_export_rect.collidepoint(x, y):
-                accuracy =  (TP+TN)/(TP+TN+FP+FN)
-                precision = TP / (TP + FP)
-                recall = TP / (TP + FN)
-                f1Score = 2 * ((recall * precision)/(recall + precision)) # Verificar si se hace clic en el botón de exportar
+                for i in range (0,6,1) :
+                    accuracy[i] =  calcularAccuracy(TP,TN,FP,FN,i)
+                    precision[i] = calcularPrecision(TP,FP,i)
+                    recall[i] = calcularRecall(TP,FN,i)
+                    f1Score[i] = calcularF1(recall,precision,i)
                 export_variables_to_txt()  # Llamar a la función de exportación
                 show_thanks = True
                 thanks_start_time = time.time()  
-
 
     pygame.display.flip()
 
